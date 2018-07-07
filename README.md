@@ -26,6 +26,7 @@ You can download more then one artists' whole works at one time.
 Just input all the URL or usernames split with ','.
 
 or you can create a txt file with These, one artist one line.
+(you can use python style comment, any text after # will be ignored, space charactor and empty line are also ignored)
 
 and click the Download txt button to select file.
 
@@ -44,6 +45,7 @@ https://www.artstation.com/xrnothing 或者 xrnothing
 只需要在输入他们的 URL 或用户名时，在中间加入英文的","即可
 
 或者，你也可以新建一个文本文件（.txt），每一行输入一位作者的信息。
+（允许使用 Python 风格的注释，即 # 后的内容会被忽略，空白符与空行同样也会被忽略）
 
 然后点击 Download txt 按钮选择文件即可。
 

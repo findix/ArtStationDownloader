@@ -5,8 +5,16 @@
 
 Copyright 2018 Sean Feng(sean@FantaBlade.com)
 
+CHANGELOG
+
+20180611 0.1.0-alpha1
+允许在txt中使用Python风格的注释，即以#开头的内容会被忽略
+对txt中的空白符进行处理
+保存路径不再强制包含 ArtStation
+默认保存路径现在为用户根路径
+
 """
-__version__ = "$Revision: 0.1.0-alpha$"
+__version__ = "0.1.0-alpha1"
 # $Source$
 
 from urllib.parse import urlparse
@@ -116,8 +124,12 @@ class App(Frame):
         max_workers = 20
         if self.executor is None:
             self.executor = futures.ThreadPoolExecutor(max_workers)
+        # 去重与处理网址
+        username_set = set()
         for username in usernames:
             username = username.strip().split('/')[-1]
+            username_set.add(username)
+        for username in username_set:            
             data = self.get_projects(username)
             if len(data) is not 0:
                 args = [project['hash_id'] for project in data]
@@ -144,7 +156,18 @@ class App(Frame):
             filetypes=(('text files', '*.txt'), ("all files", "*.*"))))
         if filename is not '.':
             with open(filename, "r") as f:
-                usernames = f.readlines()
+                usernames = []
+                # 预处理，去掉注释与空白符
+                for username in f.readlines():
+                    username = username.strip()
+                    if len(username) is 0:
+                        continue
+                    sharp_at = username.find('#')
+                    if sharp_at is 0:
+                        continue
+                    if sharp_at is not -1:
+                        username = username[:sharp_at]
+                    usernames.append(username.strip())
             self.download_by_usernames(usernames)
         self.btn_download.configure(state="normal")
         self.btn_download_txt.configure(state="normal")
@@ -152,7 +175,7 @@ class App(Frame):
     def browse_directory(self):
         dir = os.path.normpath(filedialog.askdirectory())
         if dir is not '':
-            self.root_path = os.path.join(dir, 'ArtStation')
+            self.root_path = dir 
             Config.write_config('config.ini', 'Paths',
                                 'root_path', self.root_path)
             self.entry_path.delete(0, END)
@@ -199,11 +222,11 @@ class App(Frame):
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
-        master.title('ArtStation Downloader 0.1.0-alpha')  # 定义窗体标题
+        master.title('ArtStation Downloader ' + __version__)  # 定义窗体标题
         root_path_config = Config.read_config(
             'config.ini', 'Paths', 'root_path')
         self.root_path = os.path.join(
-            os.path.expanduser("~"), 'Desktop', 'ArtStation') if root_path_config is '' else root_path_config
+            os.path.expanduser("~")) if root_path_config is '' else root_path_config
         self.executor = None
         self.executor_ui = futures.ThreadPoolExecutor(1)
         self.executor_video = futures.ThreadPoolExecutor(1)
