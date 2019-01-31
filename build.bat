@@ -1,1 +1,2 @@
-pyinstaller --windowed  .\ArtStationDownloader.py
+pyinstaller --windowed  .\src\ArtStationDownloader.py
+@pause

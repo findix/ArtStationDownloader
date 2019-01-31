@@ -1,5 +1,5 @@
-#!/usr/bin/python  
-# -*- coding:utf-8 -*-  
+#!/usr/bin/python
+# -*- coding:utf-8 -*-
 # author: lingyue.wkl
 # desc: use to read ini
 # ---------------------

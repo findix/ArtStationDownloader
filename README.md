@@ -30,6 +30,8 @@ or you can create a txt file with These, one artist one line.
 
 and click the Download txt button to select file.
 
+The combobox named Type means you can choose what resources are required. image only, video only or both
+
 The Path means the path of the download folder，just set it.
 
 输入你希望下载的作者的主页地址，或者其用户名
@@ -49,6 +51,8 @@ https://www.artstation.com/xrnothing 或者 xrnothing
 
 然后点击 Download txt 按钮选择文件即可。
 
+Type 下拉选单可以设置下载资源的类型, 你可以选择“只下载图片”、“只下载视频”以及“全部下载”
+
 Path 输入框内是下载文件夹位置，你可以按需求设置。
 
 ## Bugs and Feedback
@@ -67,8 +71,22 @@ Require Pyinstaller.
 
 Just execute build.bat
 
+## For macOS/Linux/Shell
+
+install dependencies py run `pip install -r requirements.txt` first
+
+just run `python ./src/ArtStationDownloader.py` in shell to run in GUI mode
+
+or
+
+run like this:
+
+`python ./src/ArtStationDownloader.py -u username_of_artist other_username or_more -d where/you/what` in shell
+
+try `python ./src/ArtStationDownloader.py --help` to get more usage
+
 ## LICENSE
 
 MIT License
 
-Copyright (c) 2018 Sean Feng
+Copyright (c) 2018-2019 Sean Feng
