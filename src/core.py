@@ -28,13 +28,14 @@ class Core:
         self.executor_video = futures.ThreadPoolExecutor(1)
         self.root_path = None
         self.futures = []
+        self.session = requests.session()
 
     def download_file(self, url, file_path, file_name):
         file_full_path = os.path.join(file_path, file_name)
         if os.path.exists(file_full_path):
             self.log('[Exist][image][{}]'.format(file_full_path))
         else:
-            r = requests.get(url)
+            r = self.session.get(url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
                 code.write(r.content)
@@ -47,7 +48,7 @@ class Core:
         else:
             video = pafy.new(id)
             best = video.getbest(preftype="mp4")
-            r = requests.get(best.url)
+            r = self.session.get(best.url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
                 code.write(r.content)
@@ -55,7 +56,7 @@ class Core:
 
     def download_project(self, hash_id):
         url = 'https://www.artstation.com/projects/{}.json'.format(hash_id)
-        r = requests.get(url)
+        r = self.session.get(url)
         j = r.json()
         assets = j['assets']
         title = j['slug'].strip()
@@ -92,9 +93,15 @@ class Core:
                 page += 1
                 url = 'https://www.artstation.com/users/{}/projects.json?page={}'.format(
                     username, page)
-                r = requests.get(url)
+                r = self.session.get(url)
                 if not r.ok:
-                    self.log("[Error] Please input right username")
+                    err = "[Error] [{} {}] ".format(r.status_code, r.reason)
+                    if r.status_code == 403:
+                        self.log(err + "You are blocked by artstation")
+                    elif r.status_code == 404:
+                        self.log(err + "Username not found")
+                    else:
+                        self.log(err + "Unknown error")
                     break
                 j = r.json()
                 total_count = int(j['total_count'])

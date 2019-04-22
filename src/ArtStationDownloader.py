@@ -4,21 +4,9 @@
 """批量下载ArtStation图片
 
 Copyright 2018-2019 Sean Feng(sean@FantaBlade.com)
-
-CHANGELOG
-
-20180611 0.1.0-alpha1
-允许在txt中使用Python风格的注释，即以#开头的内容会被忽略
-对txt中的空白符进行处理
-保存路径不再强制包含 ArtStation
-默认保存路径现在为用户根路径
-
-20190131 0.1.1-alpha
-重构代码结构
-加入命令行模式
-GUI和命令行均加入允许选择下载文件类型（所有、图片、视频）功能
 """
-__version__ = "0.1.1-alpha"
+
+__version__ = "0.1.1-alpha1"
 # $Source$
 
 import argparse
