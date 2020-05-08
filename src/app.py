@@ -23,7 +23,7 @@ class App(Frame):
         self.btn_download.configure(state="disabled")
         self.btn_download_txt.configure(state="disabled")
         username_text = self.entry_filename.get()
-        if len(username_text) is 0:
+        if not username_text:
             messagebox.showinfo(
                 title='Warning', message='Please input usernames')
         else:
@@ -38,18 +38,18 @@ class App(Frame):
         self.btn_download_txt.configure(state="disabled")
         filename = os.path.normpath(filedialog.askopenfilename(
             filetypes=(('text files', '*.txt'), ("all files", "*.*"))))
-        if filename is not '.':
+        if filename != '.':
             with open(filename, "r") as f:
                 usernames = []
                 # 预处理，去掉注释与空白符
                 for username in f.readlines():
                     username = username.strip()
-                    if len(username) is 0:
+                    if not username:
                         continue
                     sharp_at = username.find('#')
-                    if sharp_at is 0:
+                    if sharp_at == 0:
                         continue
-                    if sharp_at is not -1:
+                    if sharp_at != -1:
                         username = username[:sharp_at]
                     usernames.append(username.strip())
             self.core.root_path = self.root_path
@@ -59,7 +59,7 @@ class App(Frame):
 
     def browse_directory(self):
         dir = os.path.normpath(filedialog.askdirectory())
-        if dir is not '':
+        if dir:
             self.root_path = dir
             config.write_config('config.ini', 'Paths',
                                 'root_path', self.root_path)
@@ -118,8 +118,8 @@ class App(Frame):
         master.title('ArtStation Downloader ' + version)  # 定义窗体标题
         root_path_config = config.read_config(
             'config.ini', 'Paths', 'root_path')
-        self.root_path = os.path.join(
-            os.path.expanduser("~"), "ArtStation") if root_path_config is '' else root_path_config
+        self.root_path = root_path_config or os.path.join(
+            os.path.expanduser("~"), "ArtStation")
         self.executor_ui = futures.ThreadPoolExecutor(1)
         self.window = master
         self.pack()
