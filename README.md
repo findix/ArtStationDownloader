@@ -33,6 +33,16 @@ The combobox named Type means you can choose what resources are required. image 
 
 The Path means the path of the download folder，just set it.
 
+### Proxy
+
+Set proxy config in config.ini like this(need restart app):
+
+```ini
+[Proxy]
+http = http://127.0.0.1:7890
+https = http://127.0.0.1:7890
+```
+
 ## Bugs and Feedback
 
 For bugs, questions and discussions please use the [Github Issues](https://github.com/findix/ArtStationDownloader/issues).
@@ -61,12 +71,14 @@ try `python ./src/ArtStationDownloader.py --help` to get more usage
 
 ## FAQ
 
-> **Why I get a message says `[Error] [403 Forbidden] You are blocked by artstation`?**
+> ~~**Why I get a message says `[Error] [403 Forbidden] You are blocked by artstation`?**~~
 
-The ArtStation has a [CAPTCHA](https://en.wikipedia.org/wiki/CAPTCHA) system (by Cloudflare) which need you proof you are human otherwise forbid you. I haven't found a way solve this for now. If you have idea, please tell me.
+~~The ArtStation has a [CAPTCHA](https://en.wikipedia.org/wiki/CAPTCHA) system (by Cloudflare) which need you proof you are human otherwise forbid you. I haven't found a way solve this for now. If you have idea, please tell me.~~
+
+It seems solved by inspire of [samarthshrivas](https://github.com/findix/ArtStationDownloader/issues/24#issuecomment-1124734529)
 
 ## LICENSE
 
 MIT License
 
-Copyright (c) 2018-2019 Sean Feng
+Copyright (c) 2018 Sean Feng

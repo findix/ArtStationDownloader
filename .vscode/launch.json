@@ -9,7 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/src/ArtStationDownloader.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": true
         },
         {
             "name": "Python: ArtStationDownload in Terminal",
@@ -21,25 +22,28 @@
                 "ase",
                 "ikaired",
                 "-d",
-                "D:\\Users\\Sean\\Desktop\\ArtStation",
+                "${env:UserProfile}\\Desktop\\ArtStation",
                 "-t",
                 "all"
             ],
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": true
         },
         {
             "name": "Python: Current File (Integrated Terminal)",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": true
         },
         {
             "name": "Python: Current File (External Terminal)",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "externalTerminal"
+            "console": "externalTerminal",
+            "justMyCode": true
         }
     ]
 }

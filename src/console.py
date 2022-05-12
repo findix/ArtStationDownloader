@@ -2,8 +2,8 @@
 
 from core import Core
 
-class Console:
 
+class Console:
     def __init__(self):
         self.core = Core()
 

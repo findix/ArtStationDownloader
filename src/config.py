@@ -29,7 +29,7 @@ class Config:
     def set(self, filed, key, value):
         try:
             self.cf.set(field, key, value)
-            self.cf.write(open(self.path, 'w'))
+            self.cf.write(open(self.path, "w", encoding="utf-8"))
         except:
             return False
         return True
@@ -42,10 +42,10 @@ def read_config(config_file_path, field, key):
         if field in cf:
             result = cf[field][key]
         else:
-            return ''
+            return ""
     except configparser.Error as e:
         print(e)
-        return ''
+        return ""
     return result
 
 
@@ -56,7 +56,7 @@ def write_config(config_file_path, field, key, value):
         if field not in cf:
             cf.add_section(field)
         cf[field][key] = value
-        cf.write(open(config_file_path, 'w'))
+        cf.write(open(config_file_path, "w", encoding="utf-8"))
     except configparser.Error as e:
         print(e)
         return False
