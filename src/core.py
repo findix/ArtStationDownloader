@@ -49,6 +49,7 @@ class Core:
             self.session.proxies.update(proxys)
 
     def download_file(self, url, file_path, file_name):
+        url = url.replace("/large/", "/4k/")
         file_full_path = os.path.join(file_path, file_name)
         if os.path.exists(file_full_path):
             self.log("[Exist][image][{}]".format(file_full_path))
@@ -114,11 +115,7 @@ class Core:
             page = 0
             while True:
                 page += 1
-                url = (
-                    "https://{}.artstation.com/rss?page={}".format(
-                        username, page
-                    )
-                )
+                url = "https://{}.artstation.com/rss?page={}".format(username, page)
                 r = self.session.get(url)
                 if not r.ok:
                     err = "[Error] [{} {}] ".format(r.status_code, r.reason)
@@ -129,18 +126,14 @@ class Core:
                     else:
                         self.log(err + "Unknown error")
                     break
-                j =  BeautifulSoup(r.text, "lxml-xml").rss.channel
+                channel = BeautifulSoup(r.text, "lxml-xml").rss.channel
+                links = channel.select("item > link")
+                if len(links) == 0:
+                    break
                 if page == 1:
                     self.log("\n==========[{}] BEGIN==========".format(username))
-                data_fragment = j.select("item > link")
-                if len(data_fragment) == 0:
-                    break
-                data += data_fragment
-                self.log(
-                    "\n==========Get page {}==========".format(
-                        page
-                    )
-                )
+                data += links
+                self.log("\n==========Get page {}==========".format(page))
         return data
 
     def download_by_username(self, username):
@@ -148,7 +141,9 @@ class Core:
         if len(data) != 0:
             future_list = []
             for project in data:
-                future = self.executor.submit(self.download_project, project.string.split("/")[-1])
+                future = self.executor.submit(
+                    self.download_project, project.string.split("/")[-1]
+                )
                 future_list.append(future)
             futures.wait(future_list)
 
