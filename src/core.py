@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 import pafy
 import requests
 
-import config
+from config import Config
 
 
 class Core:
@@ -28,25 +28,36 @@ class Core:
         max_workers = cpu_count() * 4
         self.executor = futures.ThreadPoolExecutor(max_workers)
         self.executor_video = futures.ThreadPoolExecutor(1)
+        self.invoke = self._get_invoke()
+        self.invoke_video = self._get_invoke("video")
         self.root_path = None
         self.futures = []
-        self.session = requests.session()
+        self._session = requests.session()
+        self.proxy_setup()
+
+    def http_get(self, url):
+        r = self._session.get(url, timeout=10)
+        return r
+
+    def proxy_setup(self):
+        session = self._session
         # 设置 User Agent
-        self.session.headers.update(
+        session.headers.update(
             {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36"
             }
         )
         # 设置代理
-        http = config.read_config("config.ini", "Proxy", "http")
-        https = config.read_config("config.ini", "Proxy", "https")
+        config = Config("config.ini")
+        http = config.get("Proxy", "http")
+        https = config.get("Proxy", "https")
         if http or https:
             proxys = {}
             if http:
                 proxys["http"] = http
             if https:
                 proxys["https"] = https
-            self.session.proxies.update(proxys)
+            session.proxies.update(proxys)
 
     def download_file(self, url, file_path, file_name):
         url = url.replace("/large/", "/4k/")
@@ -54,7 +65,7 @@ class Core:
         if os.path.exists(file_full_path):
             self.log("[Exist][image][{}]".format(file_full_path))
         else:
-            r = self.session.get(url)
+            r = self.http_get(url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
                 code.write(r.content)
@@ -67,7 +78,7 @@ class Core:
         else:
             video = pafy.new(id)
             best = video.getbest(preftype="mp4")
-            r = self.session.get(best.url)
+            r = self.http_get(best.url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
                 code.write(r.content)
@@ -75,7 +86,7 @@ class Core:
 
     def download_project(self, hash_id):
         url = "https://www.artstation.com/projects/{}.json".format(hash_id)
-        r = self.session.get(url)
+        r = self.http_get(url)
         j = r.json()
         assets = j["assets"]
         title = j["slug"].strip()
@@ -91,9 +102,7 @@ class Core:
                 file_name = urlparse(url).path.split("/")[-1]
                 try:
                     self.futures.append(
-                        self.executor.submit(
-                            self.download_file, url, file_path, file_name
-                        )
+                        self.invoke(self.download_file, url, file_path, file_name)
                     )
                 except Exception as e:
                     print(e)
@@ -104,7 +113,7 @@ class Core:
                 ).group()
                 try:
                     self.futures.append(
-                        self.executor_video.submit(self.download_video, id, file_path)
+                        self.invoke_video(self.download_video, id, file_path)
                     )
                 except Exception as e:
                     print(e)
@@ -116,7 +125,7 @@ class Core:
             while True:
                 page += 1
                 url = "https://{}.artstation.com/rss?page={}".format(username, page)
-                r = self.session.get(url)
+                r = self.http_get(url)
                 if not r.ok:
                     err = "[Error] [{} {}] ".format(r.status_code, r.reason)
                     if r.status_code == 403:
@@ -141,13 +150,14 @@ class Core:
         if len(data) != 0:
             future_list = []
             for project in data:
-                future = self.executor.submit(
+                future = self.invoke(
                     self.download_project, project.string.split("/")[-1]
                 )
                 future_list.append(future)
             futures.wait(future_list)
 
     def download_by_usernames(self, usernames, type):
+        self.proxy_setup()
         self.no_image = type == "video"
         self.no_video = type == "image"
         # 去重与处理网址
@@ -159,3 +169,21 @@ class Core:
                 self.download_by_username(username)
         futures.wait(self.futures)
         self.log("\n========ALL DONE========")
+
+    def _get_invoke(self, executor=None):
+        def invoke(func, *args, **kwargs):
+            def done_callback(worker):
+                worker_exception = worker.exception()
+                if worker_exception:
+                    self.log(str(worker_exception))
+                    raise (worker_exception)
+
+            if executor == "video":
+                futurn = self.executor_video.submit(func, *args, **kwargs)
+                futurn.add_done_callback(done_callback)
+            else:
+                futurn = self.executor.submit(func, *args, **kwargs)
+                futurn.add_done_callback(done_callback)
+            return futurn
+
+        return invoke

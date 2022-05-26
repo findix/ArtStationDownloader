@@ -43,6 +43,8 @@ http = http://127.0.0.1:7890
 https = http://127.0.0.1:7890
 ```
 
+> Attention! Do not use system proxy. It may cause error. [More infomation](https://github.com/python/cpython/issues/86793)
+
 ## Bugs and Feedback
 
 For bugs, questions and discussions please use the [Github Issues](https://github.com/findix/ArtStationDownloader/issues).

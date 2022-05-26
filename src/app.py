@@ -29,18 +29,24 @@ class App(Frame):
         self.text.see(END)
         self.text.configure(state="disabled")
 
+    def _set_download_buttons(self, state):
+        if state:
+            self.btn_download.configure(state="normal")
+            self.btn_download_txt.configure(state="normal")
+        else:
+            self.btn_download.configure(state="disabled")
+            self.btn_download_txt.configure(state="disabled")
+
     def download(self):
-        self.btn_download.configure(state="disabled")
-        self.btn_download_txt.configure(state="disabled")
         username_text = self.entry_filename.get()
         if not username_text:
             messagebox.showinfo(title="Warning", message="Please input usernames")
-        else:
-            usernames = username_text.split(",")
-            self.core.root_path = self.root_path.get()
-            self.core.download_by_usernames(usernames, self.combobox_type.current())
-        self.btn_download.configure(state="normal")
-        self.btn_download_txt.configure(state="normal")
+            return
+        self._set_download_buttons(False)
+        usernames = username_text.split(",")
+        self.core.root_path = self.root_path.get()
+        self.core.download_by_usernames(usernames, self.combobox_type.current())
+        self._set_download_buttons(True)
 
     def download_txt(self):
         self.btn_download.configure(state="disabled")
@@ -90,12 +96,12 @@ class App(Frame):
         self.btn_download = Button(
             frame_tool,
             text="Download",
-            command=lambda: self.executor_ui.submit(self.download),
+            command=lambda: self.invoke(self.download),
         )
         self.btn_download_txt = Button(
             frame_tool,
             text="Download txt",
-            command=lambda: self.executor_ui.submit(self.download_txt),
+            command=lambda: self.invoke(self.download_txt),
         )
         self.lbl_type = Label(frame_path, text="Type:")
         self.combobox_type = ttk.Combobox(frame_path, state="readonly")
@@ -133,13 +139,24 @@ class App(Frame):
         self.text.focus()
         self.lbl_status.pack(side=LEFT, fill=X, expand=True)
 
+    def invoke(self, func):
+        def done_callback(worker):
+            worker_exception = worker.exception()
+            if worker_exception:
+                self.log(str(worker_exception))
+                self._set_download_buttons(True)
+                raise(worker_exception)
+        return self.executor_ui.submit(func).add_done_callback(done_callback)
+
     def __init__(self, version):
         self.core = Core(self.log)
         master = Tk()
         Frame.__init__(self, master)
         master.title("ArtStation Downloader " + version)  # 定义窗体标题
         self.root_path = StringVar()
-        self.root_path.trace_add("write", lambda name, index, mode: self.save_root_path(self.root_path.get()))
+        self.root_path.trace_add(
+            "write", lambda name, index, mode: self.save_root_path(self.root_path.get())
+        )
         root_path_config = self.load_root_path()
         self.root_path.set(
             root_path_config or os.path.join(os.path.expanduser("~"), "ArtStation")
