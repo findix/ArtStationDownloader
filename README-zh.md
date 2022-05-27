@@ -41,8 +41,6 @@ http = http://127.0.0.1:7890
 https = http://127.0.0.1:7890
 ```
 
-> 注意，请不要开启系统代理，否则可能导致错误。[详情](https://github.com/python/cpython/issues/86793)
-
 ## 缺陷与反馈
 
 如果在使用过程中发现任何错误、问题或是希望讨论，请使用 [Github Issues](https://github.com/findix/ArtStationDownloader/issues).
