@@ -4,8 +4,8 @@
 Copyright 2018-2019 Sean Feng(sean@FantaBlade.com)
 """
 
+from enum import Enum
 import os
-import re
 from concurrent import futures
 from multiprocessing import cpu_count
 from urllib.parse import urlparse
@@ -15,6 +15,15 @@ import pafy
 import requests
 
 from config import Config
+
+
+class DownloadSorting(Enum):
+    TITLE_BASED = "Title-based"
+    USERNAME_BASED = "Username-based"
+    ALL_IN_ONE = "All-in-one"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class Core:
@@ -30,13 +39,18 @@ class Core:
         self.executor_video = futures.ThreadPoolExecutor(1)
         self.invoke = self._get_invoke()
         self.invoke_video = self._get_invoke("video")
-        self.root_path = None
+        self.root_path: str = None
+        self.download_sorting: DownloadSorting = None
         self.futures = []
         self._session = requests.session()
         self.proxy_setup()
 
     def http_get(self, url):
-        r = self._session.get(url, timeout=10)
+        try:
+            r = self._session.get(url, timeout=10)
+        except requests.exceptions.InvalidURL:
+            print(f'"{url}" is not valid url')
+            return
         return r
 
     def proxy_setup(self):
@@ -94,9 +108,15 @@ class Core:
         username = j["user"]["username"]
         for asset in assets:
             assert self.root_path
-            user_path = os.path.join(self.root_path, username)
+            if self.download_sorting != DownloadSorting.ALL_IN_ONE:
+                user_path = os.path.join(self.root_path, username)
+            else:
+                user_path = self.root_path
             os.makedirs(user_path, exist_ok=True)
-            file_path = os.path.join(user_path, title)
+            if self.download_sorting == DownloadSorting.TITLE_BASED:
+                file_path = os.path.join(user_path, title)
+            else:
+                file_path = user_path
             if not self.no_image and asset["has_image"]:  # 包含图片
                 url = asset["image_url"]
                 file_name = urlparse(url).path.split("/")[-1]
@@ -107,16 +127,15 @@ class Core:
                 except Exception as e:
                     print(e)
             if not self.no_video and asset["has_embedded_player"]:  # 包含视频
-                player_embedded = asset["player_embedded"]
-                id = re.search(
-                    r"(?<=https://www\.youtube\.com/embed/)[\w_]+", player_embedded
-                ).group()
-                try:
-                    self.futures.append(
-                        self.invoke_video(self.download_video, id, file_path)
-                    )
-                except Exception as e:
-                    print(e)
+                player_embedded = BeautifulSoup(asset["player_embedded"], "html.parser")
+                src = player_embedded.find("iframe").get("src")
+                if "youtube" in src:
+                    try:
+                        self.futures.append(
+                            self.invoke_video(self.download_video, src, file_path)
+                        )
+                    except Exception as e:
+                        print(e)
 
     def get_projects(self, username):
         data = []
@@ -156,10 +175,13 @@ class Core:
                 future_list.append(future)
             futures.wait(future_list)
 
-    def download_by_usernames(self, usernames, type):
+    def download_by_usernames(
+        self, usernames, download_type, download_sorting: DownloadSorting
+    ):
         self.proxy_setup()
-        self.no_image = type == "video"
-        self.no_video = type == "image"
+        self.no_image = download_type == "video"
+        self.no_video = download_type == "image"
+        self.download_sorting = download_sorting
         # 去重与处理网址
         username_set = set()
         for username in usernames:
