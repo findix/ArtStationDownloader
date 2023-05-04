@@ -9,7 +9,7 @@ import os
 from concurrent import futures
 from multiprocessing import cpu_count
 from urllib.parse import urlparse
-import http.client
+import http.client as http_client
 from bs4 import BeautifulSoup
 import pafy
 import requests
@@ -44,24 +44,26 @@ class Core:
         self.futures = []
         self._session = requests.session()
         self.proxy_setup()
-    
+
     def http_client_get(self, url):
         try:
             headers = {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
-            'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            'Accept-Language': "en-US,en;q=0.5",
-            'Accept-Encoding': "gzip, deflate, br",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate, br",
             }
             parsed_url = urlparse(url)
-            conn = http.client.HTTPSConnection(parsed_url.netloc)
-            conn.request("GET", parsed_url.path+"?"+parsed_url.query, headers=headers)
+            conn = http_client.HTTPSConnection(parsed_url.netloc)
+            conn.request(
+                "GET", parsed_url.path + "?" + parsed_url.query, headers=headers
+            )
 
             r = conn.getresponse()
 
         except:
-            print(f'Error in http_client_get')
-            
+            print(f"Error in http_client_get")
+
         return r
 
     def http_get(self, url):
@@ -173,7 +175,9 @@ class Core:
                     else:
                         self.log(err + "Unknown error")
                     break
-                channel = BeautifulSoup(r.read().decode("utf-8"), "lxml-xml").rss.channel
+                channel = BeautifulSoup(
+                    r.read().decode("utf-8"), "lxml-xml"
+                ).rss.channel
                 links = channel.select("item > link")
                 if len(links) == 0:
                     break

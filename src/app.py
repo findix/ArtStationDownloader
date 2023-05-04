@@ -10,13 +10,18 @@ from core import Core, DownloadSorting
 class App:
     def __init__(self, version):
         self.core = Core(self.log)
-        self.user_settings = sg.UserSettings()
+        self.user_config = sg.UserSettings(
+            os.path.join(os.path.abspath("."), "config.ini"),
+            use_config_file=True,
+            convert_bools_and_none=True,
+        )
+        self.user_settings = self.user_config["Settings"]
 
         # 兼容模式
-        if not self.user_settings.exists("root_path"):
-            root_path = config.read_config("config.ini", "Paths", "root_path")
-            if root_path:
-                self.user_settings.set("root_path", root_path)
+        root_path = self.user_config["Paths"]["root_path"]
+        if root_path:
+            self.user_settings["root_path"] = root_path
+            self.user_config["Paths"].delete_section()
 
         self.root_path = self.user_settings.get(
             "root_path", os.path.join(os.path.expanduser("~"), "ArtStation")
@@ -39,6 +44,7 @@ class App:
                 lambda: self.download_txt(args), ""
             ),
             "-DOWNLOAD-SORTING-": self._set_download_sorting,
+            "-BROWSE-": self.browse_directory,
             "log": self._log,
             "popup": self._popup,
             "set_download_buttons": self._set_download_buttons,
@@ -82,6 +88,7 @@ class App:
             usernames, self.window["-TYPE-"].get(), self.download_sorting
         )
         self.window.write_event_value("set_download_buttons", True)
+        self.user_settings.set("default_username", username_text)
 
     def get_download_txt_file(self):
         self.window.write_event_value("set_download_buttons", False)
@@ -111,7 +118,7 @@ class App:
         self.window.write_event_value("set_download_buttons", True)
 
     def browse_directory(self):
-        root_path = sg.popup_get_folder("Select a folder")
+        root_path = sg.popup_get_folder("Select a folder", default_path=self.root_path)
         if root_path:
             self.root_path = root_path
             self.window["-PATH-"].update(root_path)
@@ -120,7 +127,12 @@ class App:
     def create_layout(self):
         sg.theme("Dark Blue 3")
         layout = [
-            [sg.Text('Usernames (split by ","):'), sg.InputText(key="-USERNAME-")],
+            [
+                sg.Text('Usernames (split by ","):'),
+                sg.InputText(
+                    self.user_settings.get("default_username", ""), key="-USERNAME-"
+                ),
+            ],
             [
                 sg.Text("Type:"),
                 sg.Combo(
@@ -141,8 +153,8 @@ class App:
             ],
             [
                 sg.Text("Path:"),
-                sg.InputText(key="-PATH-", default_text=self.root_path),
-                sg.FolderBrowse("Browse", key="-BROWSE-"),
+                sg.InputText(key="-PATH-", default_text=self.root_path, disabled=True),
+                sg.Button("Browse", key="-BROWSE-", bind_return_key=True),
             ],
             [
                 sg.Button("Download", key="-DOWNLOAD-", bind_return_key=True),
