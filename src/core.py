@@ -13,7 +13,7 @@ import http.client as http_client
 from bs4 import BeautifulSoup
 import pafy
 import requests
-
+import json
 from config import Config
 
 
@@ -48,10 +48,9 @@ class Core:
     def http_client_get(self, url):
         try:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Accept-Encoding": "gzip, deflate, br",
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
             }
             parsed_url = urlparse(url)
             conn = http_client.HTTPSConnection(parsed_url.netloc)
@@ -65,6 +64,26 @@ class Core:
             print(f"Error in http_client_get")
 
         return r
+
+    def http_client_get_json(self, url):
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+            }
+            parsed_url = urlparse(url)
+            conn = http_client.HTTPSConnection(parsed_url.netloc)
+            conn.request(
+                "GET", parsed_url.path + "?" + parsed_url.query, headers=headers
+            )
+
+            r = conn.getresponse()
+            
+        except:
+            print(f"Error in http_client_get")
+
+        return json.loads(r.read().decode())
 
     def http_get(self, url):
         try:
@@ -121,8 +140,8 @@ class Core:
 
     def download_project(self, hash_id):
         url = "https://www.artstation.com/projects/{}.json".format(hash_id)
-        r = self.http_get(url)
-        j = r.json()
+        r = self.http_client_get_json(url)
+        j = r
         assets = j["assets"]
         title = j["slug"].strip()
         # self.log('=========={}=========='.format(title))
