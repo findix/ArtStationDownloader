@@ -48,9 +48,9 @@ class Core:
     def http_client_get(self, url):
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
             }
             parsed_url = urlparse(url)
             conn = http_client.HTTPSConnection(parsed_url.netloc)
@@ -58,40 +58,24 @@ class Core:
                 "GET", parsed_url.path + "?" + parsed_url.query, headers=headers
             )
 
-            r = conn.getresponse()
+            resp = conn.getresponse()
 
-        except:
-            print(f"Error in http_client_get")
+        except Exception as e:
+            print(f"Connect error [{e}]")
 
-        return r
+        return resp
 
     def http_client_get_json(self, url):
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-            }
-            parsed_url = urlparse(url)
-            conn = http_client.HTTPSConnection(parsed_url.netloc)
-            conn.request(
-                "GET", parsed_url.path + "?" + parsed_url.query, headers=headers
-            )
-
-            r = conn.getresponse()
-            
-        except:
-            print(f"Error in http_client_get")
-
-        return json.loads(r.read().decode())
+        resp = self.http_client_get(url)
+        return json.loads(resp.read().decode())
 
     def http_get(self, url):
         try:
-            r = self._session.get(url, timeout=10)
+            resp = self._session.get(url, timeout=10)
         except requests.exceptions.InvalidURL:
             print(f'"{url}" is not valid url')
             return
-        return r
+        return resp
 
     def proxy_setup(self):
         session = self._session
@@ -109,8 +93,10 @@ class Core:
             proxys = {}
             if http:
                 proxys["http"] = http
+                os.environ["HTTP_PROXY"] = http
             if https:
                 proxys["https"] = https
+                os.environ["HTTPS_PROXY"] = https
             session.proxies.update(proxys)
 
     def download_file(self, url, file_path, file_name):
@@ -119,10 +105,10 @@ class Core:
         if os.path.exists(file_full_path):
             self.log("[Exist][image][{}]".format(file_full_path))
         else:
-            r = self.http_get(url)
+            resp = self.http_get(url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
-                code.write(r.content)
+                code.write(resp.content)
             self.log("[Finish][image][{}]".format(file_full_path))
 
     def download_video(self, id, file_path):
@@ -132,16 +118,16 @@ class Core:
         else:
             video = pafy.new(id)
             best = video.getbest(preftype="mp4")
-            r = self.http_get(best.url)
+            resp = self.http_get(best.url)
             os.makedirs(file_path, exist_ok=True)
             with open(file_full_path, "wb") as code:
-                code.write(r.content)
+                code.write(resp.content)
             self.log("[Finish][video][{}]".format(file_full_path))
 
     def download_project(self, hash_id):
         url = "https://www.artstation.com/projects/{}.json".format(hash_id)
-        r = self.http_client_get_json(url)
-        j = r
+        resp = self.http_client_get_json(url)
+        j = resp
         assets = j["assets"]
         title = j["slug"].strip()
         # self.log('=========={}=========='.format(title))
@@ -184,18 +170,18 @@ class Core:
             while True:
                 page += 1
                 url = "https://{}.artstation.com/rss?page={}".format(username, page)
-                r = self.http_client_get(url)
-                if r.status != 200:
-                    err = "[Error] [{} {}] ".format(r.status, r.reason)
-                    if r.status == 403:
+                resp = self.http_client_get(url)
+                if resp.status != 200:
+                    err = "[Error] [{} {}] ".format(resp.status, resp.reason)
+                    if resp.status == 403:
                         self.log(err + "You are blocked by artstation")
-                    elif r.status == 404:
+                    elif resp.status == 404:
                         self.log(err + "Username not found")
                     else:
                         self.log(err + "Unknown error")
                     break
                 channel = BeautifulSoup(
-                    r.read().decode("utf-8"), "lxml-xml"
+                    resp.read().decode("utf-8"), "lxml-xml"
                 ).rss.channel
                 links = channel.select("item > link")
                 if len(links) == 0:
