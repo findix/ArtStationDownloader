@@ -10,7 +10,7 @@ from concurrent import futures
 from multiprocessing import cpu_count
 from urllib.parse import urlparse
 import http.client as http_client
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 import pafy
 import requests
 import json
@@ -67,7 +67,12 @@ class Core:
 
     def http_client_get_json(self, url):
         resp = self.http_client_get(url)
-        return json.loads(resp.read().decode())
+        try:
+            resp_str = resp.read().decode()
+            json_result = json.loads(resp_str)
+        except json.decoder.JSONDecodeError:
+            print(f"json decode error\nurl:{url}\n{resp_str}")
+        return json_result
 
     def http_get(self, url):
         try:
@@ -163,7 +168,7 @@ class Core:
                     except Exception as e:
                         print(e)
 
-    def get_projects(self, username):
+    def get_projects(self, username) -> element.ResultSet[element.Tag]:
         data = []
         if username != "":
             page = 0
@@ -197,10 +202,11 @@ class Core:
         if len(data) != 0:
             future_list = []
             for project in data:
-                future = self.invoke(
-                    self.download_project, project.string.split("/")[-1]
-                )
-                future_list.append(future)
+                if project.string.startswith("https://www.artstation.com/artwork/"):
+                    future = self.invoke(
+                        self.download_project, project.string.split("/")[-1]
+                    )
+                    future_list.append(future)
             futures.wait(future_list)
 
     def download_by_usernames(
