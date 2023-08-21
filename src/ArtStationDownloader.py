@@ -6,7 +6,7 @@
 Copyright 2018 Sean Feng(sean@fantablade.com)
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 # $Source$
 
 import argparse
